@@ -5,6 +5,12 @@
 /.pnp
 .pnp.js
 
+# Cloudflare / local build and tooling caches
+/.wrangler/
+/.turbo/
+/.cache/
+/.eslintcache
+
 # testing
 /coverage
 /test-results
@@ -30,6 +36,9 @@ yarn-debug.log*
 yarn-error.log*
 
 # local env files
+/.env*
+!/.env.example
+!/.env.docs.example
 .env.local
 .env.docs.local
 .env.development.local
@@ -71,6 +80,19 @@ webpack-internal:/
 
 # Local AI planning and review records
 /_project-ai/
+/docs/portfolio/
+/docs/superpowers/
+
+# Local credentials, signing material, and backups
+*.key
+*.p12
+*.pfx
+*.keystore
+*.mobileprovision
+credentials.json
+secrets.json
+*.bak
+*.backup
 
 # Local Cloudflare Worker route configuration
 /cloudflare/notion-image-proxy/wrangler.toml
