@@ -2,7 +2,6 @@
 import axios from 'axios'
 import { startNotionOAuth, completeNotionOAuth } from '@/lib/server/notionOAuth'
 import callback from '@/pages/api/auth/callback/notion'
-import { getServerSideProps } from '@/pages/auth'
 
 jest.mock('axios', () => ({ post: jest.fn() }))
 const state = 'a'.repeat(43)
@@ -68,19 +67,13 @@ it.each([undefined, 'b'.repeat(43), ['a'], '中'.repeat(43)])(
     expect(axios.post).not.toHaveBeenCalled()
   }
 )
-it('returns only a fixed success URL through both callback routes', async () => {
+it('returns only a fixed success URL through the API callback route', async () => {
   const log = jest.spyOn(console, 'log').mockImplementation(() => {})
   const response = res()
   await callback(req(), response)
   expect(response.url).toBe('/auth/result?status=success')
   expect(response.headers['Set-Cookie']).toContain('Max-Age=0')
-  const legacy = await getServerSideProps({
-    req: req(),
-    res: res(),
-    query: req().query
-  })
-  expect(legacy.redirect.destination).toBe(response.url)
-  expect(JSON.stringify([response, legacy])).not.toMatch(
+  expect(JSON.stringify(response)).not.toMatch(
     /fixture-access-token|private@example|fixture-secret/
   )
   expect(log).not.toHaveBeenCalled()

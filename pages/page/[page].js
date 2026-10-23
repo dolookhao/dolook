@@ -33,7 +33,9 @@ export async function getStaticPaths({ locale }) {
 
 export async function getStaticProps({ params: { page }, locale }) {
   const from = `page-${page}`
-  const props = await fetchGlobalAllData({ from, locale })
+  const props = await fetchGlobalAllData({ from, locale, includeUnpublishedPageIds: true })
+  const unpublishedPageIds = props.__unpublishedPageIds || []
+  delete props.__unpublishedPageIds
   const { allPages } = props
   const POST_PREVIEW_LINES = siteConfig(
     'POST_PREVIEW_LINES',
@@ -60,7 +62,7 @@ export async function getStaticProps({ params: { page }, locale }) {
         continue
       }
       const rawBlockMap = await getPostBlocks(post.id, 'slug', POST_PREVIEW_LINES)
-      post.blockMap = getPublicPostBlockMap(post, adapterNotionBlockMap(rawBlockMap), props.allPages)
+      post.blockMap = getPublicPostBlockMap(post, adapterNotionBlockMap(rawBlockMap), props.allPages, unpublishedPageIds)
       if (post.blockMap?.block) {
         post.blockMap.block = formatNotionBlock(post.blockMap.block)
       }

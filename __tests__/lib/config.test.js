@@ -32,4 +32,30 @@ describe('siteConfig', () => {
       })
     ).toBe(true)
   })
+
+  it('uses an explicit production URL ahead of a stale Notion demo URL', () => {
+    const previous = process.env.NEXT_PUBLIC_LINK
+    process.env.NEXT_PUBLIC_LINK = 'https://dolookhao.bid'
+    try {
+      expect(siteConfig('LINK', null, { LINK: 'https://preview.tangly1024.com' }))
+        .toBe('https://dolookhao.bid')
+    } finally {
+      if (previous === undefined) delete process.env.NEXT_PUBLIC_LINK
+      else process.env.NEXT_PUBLIC_LINK = previous
+    }
+  })
+
+  it('uses the project URL when the env var is absent and Notion Config has a demo URL', () => {
+    const previousEnv = process.env.NEXT_PUBLIC_LINK
+    const previousLink = BLOG.LINK
+    delete process.env.NEXT_PUBLIC_LINK
+    BLOG.LINK = 'https://dolookhao.bid'
+    try {
+      expect(siteConfig('LINK', null, { LINK: 'https://preview.tangly1024.com' }))
+        .toBe('https://dolookhao.bid')
+    } finally {
+      BLOG.LINK = previousLink
+      if (previousEnv !== undefined) process.env.NEXT_PUBLIC_LINK = previousEnv
+    }
+  })
 })

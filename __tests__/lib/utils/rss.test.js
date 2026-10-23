@@ -90,6 +90,7 @@ describe('generateRss', () => {
       latestPosts: [
         {
           id: 'post-1',
+          status: 'Published',
           slug: 'hello',
           title: 'Hello',
           summary: 'Summary',
@@ -130,6 +131,7 @@ describe('generateRss', () => {
       latestPosts: [
         {
           id: 'post-1',
+          status: 'Published',
           slug: 'hello',
           title: 'Hello',
           summary: 'Summary',
@@ -148,6 +150,19 @@ describe('generateRss', () => {
       })
     )
     expect(fs.writeFileSync).toHaveBeenCalledTimes(3)
+  })
+
+  it('omits invisible posts even when supplied in latestPosts', async () => {
+    await generateRss({
+      NOTION_CONFIG: { RSS_FULL_CONTENT: 'false' },
+      siteInfo: { title: 'site', description: 'desc', link: 'https://example.com' },
+      latestPosts: [
+        { id: 'published', slug: 'live', title: 'Live', status: 'Published', summary: 'Live', publishDay: '2026-02-18' },
+        { id: 'draft', slug: 'draft', title: 'Draft', status: 'Invisible', summary: 'Private', publishDay: '2026-02-18' }
+      ]
+    })
+    expect(addItemMock).toHaveBeenCalledTimes(1)
+    expect(addItemMock).toHaveBeenCalledWith(expect.objectContaining({ title: 'Live' }))
   })
 
   it('generates RSS only for the default locale during multi-locale builds', () => {

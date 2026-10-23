@@ -45,6 +45,7 @@ const ExternalPlugin = props => {
     NOTION_CONFIG
   )
   const ADSENSE_GOOGLE_ID = siteConfig('ADSENSE_GOOGLE_ID', null, NOTION_CONFIG)
+  const IS_PROXIO_THEME = siteConfig('THEME', null, NOTION_CONFIG) === 'proxio'
   const FACEBOOK_APP_ID = siteConfig('FACEBOOK_APP_ID', null, NOTION_CONFIG)
   const FACEBOOK_PAGE_ID = siteConfig('FACEBOOK_PAGE_ID', null, NOTION_CONFIG)
   const FIREWORKS = siteConfig('FIREWORKS', null, NOTION_CONFIG)
@@ -201,7 +202,7 @@ const ExternalPlugin = props => {
   const router = useRouter()
   useEffect(() => {
     // 异步渲染谷歌广告
-    if (ADSENSE_GOOGLE_ID) {
+    if (ADSENSE_GOOGLE_ID && !IS_PROXIO_THEME) {
       setTimeout(() => {
         initGoogleAdsense(ADSENSE_GOOGLE_ID)
       }, 3000)
@@ -218,6 +219,7 @@ const ExternalPlugin = props => {
   }, [
     router,
     ADSENSE_GOOGLE_ID,
+    IS_PROXIO_THEME,
     INNER_PAGE_URL_PARENT_PATH,
     innerLinkPages,
     lang
@@ -279,7 +281,7 @@ const ExternalPlugin = props => {
       )}
       {!canCopy && <DisableCopy />}
       {WEB_WHIZ_ENABLED && <WebWhiz />}
-      {AD_WWADS_BLOCK_DETECT && <AdBlockDetect />}
+      {!IS_PROXIO_THEME && AD_WWADS_BLOCK_DETECT && <AdBlockDetect />}
       {TIANLI_KEY && <TianliGPT />}
       <VConsole />
       {ENABLE_NPROGRSS && <LoadingProgress />}
@@ -392,7 +394,7 @@ const ExternalPlugin = props => {
         </Head>
       )}
 
-      {AD_WWADS_ID && (
+      {!IS_PROXIO_THEME && AD_WWADS_ID && (
         <>
           <Head>
             {/* 提前连接到广告服务器 */}

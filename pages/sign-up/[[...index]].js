@@ -2,6 +2,7 @@ import BLOG from '@/blog.config'
 import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { DynamicLayout } from '@/themes/theme'
+import { getStaticPathsForBuild } from '@/lib/build/staticExportPaths'
 
 /**
  * 注册
@@ -37,12 +38,9 @@ export async function getStaticProps(req) {
  * @returns
  */
 export function getStaticPaths() {
-  return {
-    paths: [
+  return getStaticPathsForBuild([
       { params: { index: [] } }, // 使 /sign-up 路径可访问
       { params: { index: ['sign-up'] } } // 明确 sign-up 生成路径
-    ],
-    fallback: 'blocking' // 使用 'blocking' 模式让未生成的路径也能正确响应
-  }
+  ], 'blocking')
 }
 export default SignUp

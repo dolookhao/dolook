@@ -26,15 +26,23 @@ describe('generateSitemapXml', () => {
       allPages: [
         {
           slug: '/hello-world',
+          status: 'Published',
           publishDay: '2026-02-20'
         },
         {
           slug: 'https://external.com/landing',
+          status: 'Published',
           publishDay: '2026-02-20'
         },
         {
           slug: 'https://example.com/internal/page',
+          status: 'Published',
           publishDay: 'invalid-date'
+        },
+        {
+          slug: 'article/invisible',
+          status: 'Invisible',
+          publishDay: '2026-02-20'
         }
       ]
     })
@@ -47,6 +55,7 @@ describe('generateSitemapXml', () => {
     expect(xml).not.toContain('<loc>https://external.com/landing</loc>')
     expect(xml).not.toContain('https://example.com/https://external.com/landing')
     expect(xml).not.toContain('Invalid Date')
+    expect(xml).not.toContain('article/invisible')
 
     writeSpy.mockRestore()
   })

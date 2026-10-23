@@ -52,6 +52,7 @@ export interface NavPage {
   short_id?: string
   title: string
   type?: PageType
+  status?: PageStatus
   slug: string
   summary?: string
   category?: string
@@ -60,6 +61,7 @@ export interface NavPage {
   pageIcon?: string
   href?: string
   publishDate?: number
+  publishDay?: string
   lastEditedDate?: number
   ext?: Record<string, unknown>
 }

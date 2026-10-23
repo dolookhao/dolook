@@ -6,6 +6,7 @@ import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 import { DynamicLayout } from '@/themes/theme'
 import { getPageContentText } from '@/lib/db/notion/getPageContentText'
 import { getPageBlockCacheKey } from '@/lib/db/notion/getPostBlocks'
+import { getStaticPathsForBuild } from '@/lib/build/staticExportPaths'
 
 const Index = props => {
   const theme = siteConfig('THEME', BLOG.THEME, props.NOTION_CONFIG)
@@ -20,13 +21,16 @@ const Index = props => {
 export async function getStaticProps({ params: { keyword }, locale }) {
   const props = await fetchGlobalAllData({
     from: 'search-props',
-    locale
+    locale,
+    includeUnpublishedPageIds: true
   })
+  const unpublishedPageIds = props.__unpublishedPageIds || []
+  delete props.__unpublishedPageIds
   const { allPages } = props
   const allPosts = allPages?.filter(
     page => page.type === 'Post' && page.status === 'Published'
   )
-  props.posts = await filterByMemCache(allPosts, keyword)
+  props.posts = await filterByMemCache(allPosts, keyword, unpublishedPageIds)
   props.postCount = props.posts.length
   const POST_LIST_STYLE = siteConfig(
     'POST_LIST_STYLE',
@@ -56,10 +60,7 @@ export async function getStaticProps({ params: { keyword }, locale }) {
 }
 
 export function getStaticPaths() {
-  return {
-    paths: [{ params: { keyword: 'NotionNext' } }],
-    fallback: true
-  }
+  return getStaticPathsForBuild([], true)
 }
 
 /**
@@ -68,14 +69,14 @@ export function getStaticPaths() {
  * @param keyword 关键词
  * @returns
  */
-async function filterByMemCache(allPosts, keyword) {
+async function filterByMemCache(allPosts, keyword, unpublishedPageIds = []) {
   const filterPosts = []
   if (keyword) {
     keyword = keyword.trim().toLowerCase()
   }
   for (const post of allPosts) {
     const cacheKey = getPageBlockCacheKey(post.id, post.lastEditedDate)
-    const page = getPublicPostBlockMap(post, await getDataFromCache(cacheKey, true), allPosts)
+    const page = getPublicPostBlockMap(post, await getDataFromCache(cacheKey, true), allPosts, unpublishedPageIds)
     const tagContent =
       post?.tags && Array.isArray(post?.tags) ? post?.tags.join(' ') : ''
     const categoryContent =

@@ -6,6 +6,7 @@ import { fetchNotionPageBlocks } from '@/lib/db/notion/getPostBlocks'
 import { fetchPageFromNotion } from '@/lib/db/notion/getNotionPost'
 import { processPostData } from '@/lib/utils/post'
 import { adapterNotionBlockMap } from '@/lib/utils/notion.util'
+import { writePwaManifest } from '@/lib/pwa.server'
 import {
   redactProtectedBlocks,
   verifyPostPassword
@@ -40,6 +41,7 @@ jest.mock('@/lib/utils/post', () => ({
   processPostData: jest.fn((...args) => jest.requireActual('@/lib/utils/post').processPostData(...args))
 }))
 jest.mock('@/lib/plugins/algolia', () => ({ uploadDataToAlgolia: jest.fn() }))
+jest.mock('@/lib/pwa.server', () => ({ writePwaManifest: jest.fn() }))
 jest.mock('@/lib/utils/originalityProofManifest', () => ({
   isOriginalityProofAutoManifestEnabled: () => false,
   findOriginalityProofManifestRecord: () => null,
@@ -291,6 +293,214 @@ it('keeps cached catalog failures distinguishable without exposing the internal 
   await expect(resolvePostProps({ ...options, revalidateReason: 'on-demand' })).rejects.toThrow('Site catalog is temporarily unavailable')
 })
 
+it('fails an export when the Notion catalog cannot be read', async () => {
+  getOrSetDataWithCache.mockResolvedValue({
+    __notionDataUnavailable: true,
+    allPages: [],
+    latestPosts: []
+  })
+  process.env.EXPORT = 'true'
+  await expect(fetchGlobalAllData({})).rejects.toThrow('Site catalog is temporarily unavailable')
+})
+
+it.each([
+  [{ slug: 'example-7', title: 'Example 7', type: 'Post' }, /example-7/],
+  [{ slug: 'guide', title: 'NotionNext 模板说明', type: 'Post' }, /guide/]
+])('rejects a published copied template page during personal-source export: %p', async (demoPage, reason) => {
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {},
+    allPages: [
+      { id: 'personal-project', slug: 'my-project', status: 'Published', type: 'Post' },
+      { id: 'copied-demo', status: 'Published', ...demoPage }
+    ],
+    latestPosts: [],
+    tagOptions: []
+  })
+  process.env.EXPORT = 'true'
+  await expect(fetchGlobalAllData({ pageId: 'a36bc76aecc7839d900381b217ffc738' })).rejects.toThrow(reason)
+})
+
+it('rejects a copied Tangly menu link, including a submenu, before static export', async () => {
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {},
+    allPages: [{ id: 'real-blog', slug: 'my-article', status: 'Published', type: 'Post' }],
+    customMenu: [{ status: 'Published', type: 'Menu', subMenus: [
+      { status: 'Published', type: 'SubMenu', href: 'https://www.tangly1024.com/' }
+    ] }],
+    latestPosts: [],
+    tagOptions: []
+  })
+  process.env.EXPORT = 'true'
+  await expect(fetchGlobalAllData({ pageId: 'a36bc76aecc7839d900381b217ffc738' })).rejects.toThrow(/Tangly menu/i)
+})
+
+it('allows an incremental personal export when demo fingerprints are unpublished', async () => {
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {},
+    allPages: [
+      { id: 'real-blog', slug: 'my-article', status: 'Published', type: 'Post' },
+      { id: 'old-demo', slug: 'example-1', status: 'Invisible', type: 'Post' }
+    ],
+    customMenu: [{ status: 'Invisible', type: 'Menu', href: 'https://www.tangly1024.com/' }],
+    latestPosts: [],
+    tagOptions: []
+  })
+  process.env.EXPORT = 'true'
+  const data = await fetchGlobalAllData({ pageId: 'a36bc76aecc7839d900381b217ffc738' })
+  expect(data.allPages.map(page => page.slug)).toEqual(['my-article'])
+})
+
+it('writes a PWA manifest only after a clean export catalog passes demo checks', async () => {
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: { PWA_ENABLE: true },
+    siteInfo: { title: 'Personal portfolio' },
+    allPages: [{ id: 'real-blog', slug: 'my-article', status: 'Published', type: 'Post' }],
+    latestPosts: [],
+    tagOptions: []
+  })
+  process.env.EXPORT = 'true'
+  await fetchGlobalAllData({ pageId: 'a36bc76aecc7839d900381b217ffc738' })
+  expect(writePwaManifest).toHaveBeenCalledWith({
+    siteInfo: expect.objectContaining({ title: 'Personal portfolio' }),
+    notionConfig: expect.objectContaining({ PWA_ENABLE: true })
+  })
+
+  writePwaManifest.mockClear()
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: { PWA_ENABLE: true },
+    siteInfo: { title: 'Copied demo' },
+    allPages: [
+      { id: 'old-demo', slug: 'example-1', status: 'Published', type: 'Post' }
+    ],
+    latestPosts: [],
+    tagOptions: []
+  })
+  await expect(fetchGlobalAllData({ pageId: 'a36bc76aecc7839d900381b217ffc738' })).rejects.toThrow(/example-1/)
+  expect(writePwaManifest).not.toHaveBeenCalled()
+})
+
+it('omits invisible records from every public export page list', async () => {
+  const published = { id: 'published', slug: 'live', status: 'Published', type: 'Post' }
+  const draft = { id: 'draft', slug: 'draft', title: 'Private', status: 'Invisible', type: 'Post' }
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {},
+    allPages: [published, draft],
+    latestPosts: [published, draft],
+    allNavPages: [published, draft],
+    allLinkPages: [published, draft],
+    allMembers: [],
+    allEvents: [],
+    tagOptions: []
+  })
+  process.env.EXPORT = 'true'
+  const data = await fetchGlobalAllData({})
+  expect(JSON.stringify(data)).not.toContain('Private')
+  for (const key of ['allPages', 'latestPosts', 'allNavPages', 'allLinkPages']) {
+    expect(data[key].map(page => page.slug)).toEqual(['live'])
+  }
+})
+
+it('keeps unpublished IDs server-only while making them available to redaction', async () => {
+  const draftId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {}, allPages: [], latestPosts: [], tagOptions: [],
+    __unpublishedPageIds: [draftId]
+  })
+  expect(JSON.stringify(await fetchGlobalAllData({}))).not.toContain(draftId)
+  expect((await fetchGlobalAllData({ includeUnpublishedPageIds: true })).__unpublishedPageIds)
+    .toEqual([draftId])
+})
+
+it('does not render an invisible article through its direct slug', async () => {
+  getOrSetDataWithCache.mockResolvedValue({
+    NOTION_CONFIG: {},
+    allPages: [{ id, slug: 'draft', status: 'Invisible', type: 'Post' }],
+    latestPosts: [],
+    tagOptions: []
+  })
+  const props = await resolvePostProps({ prefix: 'draft' })
+  expect(props.post).toBeNull()
+  expect(fetchNotionPageBlocks).not.toHaveBeenCalled()
+})
+
+it('does not serialize a stale Notion demo URL when a production URL is set', async () => {
+  const previous = process.env.NEXT_PUBLIC_LINK
+  process.env.NEXT_PUBLIC_LINK = 'https://dolookhao.bid'
+  try {
+    getOrSetDataWithCache.mockResolvedValue({
+      NOTION_CONFIG: { LINK: 'https://preview.tangly1024.com' },
+      allPages: [],
+      latestPosts: [],
+      tagOptions: []
+    })
+    const data = await fetchGlobalAllData({})
+    expect(data.NOTION_CONFIG.LINK).toBe('https://dolookhao.bid')
+    expect(JSON.stringify(data)).not.toContain('preview.tangly1024.com')
+  } finally {
+    if (previous === undefined) delete process.env.NEXT_PUBLIC_LINK
+    else process.env.NEXT_PUBLIC_LINK = previous
+  }
+})
+
+it('removes invisible collection rows and their references from a published block map', () => {
+  const draftId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+  const draftChildId = 'eeeeeeee-eeee-eeee-eeee-eeeeeeeeeeee'
+  const transclusionId = 'ffffffff-ffff-ffff-ffff-ffffffffffff'
+  const publicPost = {
+    id,
+    blockMap: {
+      block: {
+        [id]: { value: { id, type: 'page', content: [draftId, transclusionId] } },
+        [draftId]: {
+          value: {
+            id: draftId,
+            type: 'page',
+            parent_id: 'collection-1',
+            content: [draftChildId],
+            properties: { status_key: [['Invisible']], title: [['Private draft']] }
+          }
+        },
+        [draftChildId]: { value: { id: draftChildId, parent_id: draftId, type: 'text' } },
+        [transclusionId]: {
+          value: {
+            id: transclusionId,
+            parent_id: id,
+            type: 'transclusion_reference',
+            format: { transclusion_reference_pointer: { id: draftChildId, table: 'block' } }
+          }
+        }
+      },
+      collection: {
+        'collection-1': { value: { schema: { status_key: { name: 'status', type: 'select' } } } }
+      },
+      collection_view: {
+        'view-1': { value: { value: { page_sort: [id, draftId] } } }
+      },
+      signed_urls: { [draftChildId]: 'https://example.invalid/private-image' }
+    }
+  }
+  redactProtectedBlocks(publicPost, [])
+  expect(JSON.stringify(publicPost.blockMap)).not.toContain(draftId)
+  expect(JSON.stringify(publicPost.blockMap)).not.toContain(draftChildId)
+  expect(JSON.stringify(publicPost.blockMap)).not.toContain(transclusionId)
+  expect(JSON.stringify(publicPost.blockMap)).not.toContain('Private draft')
+  expect(publicPost.blockMap.block[id]).toBeDefined()
+})
+
+it('removes unpublished IDs from collection views even when their row blocks are absent', () => {
+  const draftId = 'dddddddd-dddd-dddd-dddd-dddddddddddd'
+  const publicPost = {
+    id,
+    blockMap: {
+      block: { [id]: { value: { id, type: 'page' } } },
+      collection_view: { view: { value: { value: { page_sort: [id, draftId] } } } }
+    }
+  }
+  redactProtectedBlocks(publicPost, [], [draftId])
+  expect(JSON.stringify(publicPost.blockMap)).not.toContain(draftId)
+  expect(publicPost.blockMap.collection_view.view.value.value.page_sort).toEqual([id])
+})
+
 it('keeps compatibility with precomputed uppercase SHA256 and legacy MD5', () => {
   expect(verifyPostPassword({ password: digest.toUpperCase() }, secret)).toBe(
     true
@@ -343,9 +553,9 @@ it('denies unknown UUID pages without a catalogued ancestor', async () => {
   expect((await resolvePostProps({ prefix: unknown })).post).toBeNull()
 })
 
-it.each(['Published', 'Invisible'])('allows a nested page only after verifying its protected %s catalog ancestor', async status => {
+it('allows a nested page only after verifying its protected Published catalog ancestor', async () => {
   const cached = await getOrSetDataWithCache()
-  cached.allPages[0].status = status
+  cached.allPages[0].status = 'Published'
   const child = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
   const blocks = body()
   blocks.block[child] = { value: { id: child, type: 'page', parent_id: id, content: [textId], properties: { title: [['Child']] } } }
@@ -365,17 +575,16 @@ it.each(['Published', 'Invisible'])('allows a nested page only after verifying i
   expect(JSON.stringify(unlocked)).not.toContain(secret)
 })
 
-it('allows an unprotected child of an Invisible catalog page without a password', async () => {
+it.each([false, true])('denies a child of an Invisible catalog page (password protected: %s)', async protectedAncestor => {
   const cached = await getOrSetDataWithCache()
   cached.allPages[0].status = 'Invisible'
-  cached.allPages[0].password = ''
+  cached.allPages[0].password = protectedAncestor ? digest : ''
   const child = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
   const blocks = body()
   blocks.block[child] = { value: { id: child, type: 'page', parent_id: id, content: [textId], properties: { title: [['Child']] } } }
   blocks.block[textId].value.parent_id = child
   fetchPageFromNotion.mockResolvedValueOnce({ id: child, title: 'Child', slug: child, type: 'Page', tags: [], blockMap: blocks })
   const props = await resolvePostProps({ prefix: child })
-  expect(props.post.blockMap.block[child]).toBeDefined()
-  expect(props.post.password).toBeFalsy()
-  expect(JSON.stringify(props.post)).toContain(marker)
+  expect(props.post).toBeNull()
+  expect(JSON.stringify(props)).not.toContain(marker)
 })

@@ -16,7 +16,7 @@ import OriginalityProof from './OriginalityProof'
  * @param {*} param0
  * @returns
  */
-const NotionPage = ({ post, className }) => {
+const NotionPage = ({ post, className, allowEmbeddedAds = true }) => {
   // 是否关闭数据库和画册的点击跳转
   const POST_DISABLE_GALLERY_CLICK = siteConfig('POST_DISABLE_GALLERY_CLICK')
   const POST_DISABLE_DATABASE_CLICK = siteConfig('POST_DISABLE_DATABASE_CLICK')
@@ -180,7 +180,7 @@ const NotionPage = ({ post, className }) => {
         }}
       />
 
-      <AdEmbed />
+      {allowEmbeddedAds && <AdEmbed />}
       <OriginalityProof proof={post?.originalityProof} />
       {hasCodeBlock(post?.blockMap) && <PrismMac />}
     </div>

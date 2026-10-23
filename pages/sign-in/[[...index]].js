@@ -3,6 +3,7 @@ import { siteConfig } from '@/lib/config'
 import { fetchGlobalAllData } from '@/lib/db/SiteDataApi'
 // import { getGlobalData } from '@/lib/db/getSiteData'
 import { DynamicLayout } from '@/themes/theme'
+import { getStaticPathsForBuild } from '@/lib/build/staticExportPaths'
 
 /**
  * 登录
@@ -38,13 +39,10 @@ export async function getStaticProps(req) {
  * @returns
  */
 export function getStaticPaths() {
-  return {
-    paths: [
+  return getStaticPathsForBuild([
       { params: { index: [] } }, // 使 /sign-in 路径可访问
       { params: { index: ['factor-one'] } } // 明确 sign-in 生成路径
-    ],
-    fallback: 'blocking' // 使用 'blocking' 模式让未生成的路径也能正确响应
-  }
+  ], 'blocking')
 }
 
 export default SignIn

@@ -33,7 +33,9 @@ const Index = props => {
 export async function getStaticProps(req) {
   const { locale } = req
   const from = 'index'
-  const props = await fetchGlobalAllData({ from, locale })
+  const props = await fetchGlobalAllData({ from, locale, includeUnpublishedPageIds: true })
+  const unpublishedPageIds = props.__unpublishedPageIds || []
+  delete props.__unpublishedPageIds
   if (process.env.NODE_ENV === 'development') {
     const configTheme = BLOG.THEME
     const notionTheme = props?.NOTION_CONFIG?.THEME || null
@@ -65,6 +67,22 @@ export async function getStaticProps(req) {
     false,
     props?.NOTION_CONFIG
   )
+  props.portfolioPages = (props.allPages || [])
+    .filter(
+      page =>
+        page?.type === 'Page' &&
+        page?.status === 'Published' &&
+        ['experience', 'about'].includes(page?.slug) &&
+        page?.href === `/${page.slug}`
+    )
+    .map(({ title, summary, slug, href, type, status }) => ({
+      title,
+      summary,
+      slug,
+      href,
+      type,
+      status
+    }))
   props.posts = props.allPages?.filter(
     page => page.type === 'Post' && page.status === 'Published'
   )
@@ -96,7 +114,7 @@ export async function getStaticProps(req) {
       previewTargets.map(post =>
         previewLimit(async () => {
           const rawBlockMap = await getPostBlocks(post.id, 'slug', POST_PREVIEW_LINES)
-          post.blockMap = getPublicPostBlockMap(post, adapterNotionBlockMap(rawBlockMap), props.allPages)
+          post.blockMap = getPublicPostBlockMap(post, adapterNotionBlockMap(rawBlockMap), props.allPages, unpublishedPageIds)
           if (post.blockMap?.block) {
             post.blockMap.block = formatNotionBlock(post.blockMap.block)
           }
@@ -112,7 +130,7 @@ export async function getStaticProps(req) {
     generateRobotsTxt(props)
     // 生成Feed订阅
     if (shouldGenerateRssForLocale({ locale })) {
-      await generateRss(props)
+      await generateRss(props, unpublishedPageIds)
     }
     // 生成
     generateSitemapXml(props)

@@ -78,7 +78,8 @@ describe('staticPaths build helpers', () => {
       allPages: [
         { id: '1', slug: 'about', type: 'Page', status: 'Published' },
         { id: '2', slug: 'post/hello', type: 'Post', status: 'Published' },
-        { id: '3', slug: 'locked', type: 'Post', status: 'Published', password: 'protected' }
+        { id: '3', slug: 'locked', type: 'Post', status: 'Published', password: 'protected' },
+        { id: '4', slug: 'draft', type: 'Post', status: 'Invisible' }
       ]
     })
 

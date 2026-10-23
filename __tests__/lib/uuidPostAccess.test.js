@@ -75,9 +75,9 @@ it('follows a nested collection to a published catalog page', async () => {
   })
 })
 
-it.each(['Published', 'Invisible'])('allows a %s catalog descendant when ids use different UUID formats', async status => {
+it('allows a Published catalog descendant when ids use different UUID formats', async () => {
   const publicCatalog = [
-    { id: ancestor.replaceAll('-', '').toUpperCase(), status }
+    { id: ancestor.replaceAll('-', '').toUpperCase(), status: 'Published' }
   ]
   expect(await resolveUuidPostAccess(page(ancestor), publicCatalog)).toEqual({
     allowed: true,
@@ -93,7 +93,7 @@ it('does not expose an unlisted sibling merely because a token can read its work
   expect(notionAPI.getBlocks).not.toHaveBeenCalled()
 })
 
-it.each(['Draft', 'Archived', undefined])('rejects a descendant of a non-public catalog page (%s)', async status => {
+it.each(['Invisible', 'Draft', 'Archived', undefined])('rejects a descendant of a non-public catalog page (%s)', async status => {
   expect(
     (
       await resolveUuidPostAccess(page(ancestor), [
