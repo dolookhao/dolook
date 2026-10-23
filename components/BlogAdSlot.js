@@ -4,6 +4,8 @@ const BlogAdSlot = ({ placement }) => {
   const [config, setConfig] = useState(null)
 
   useEffect(() => {
+    if (process.env.NEXT_PUBLIC_BLOG_ADS_RUNTIME !== 'true') return undefined
+
     let active = true
     fetch('/api/blog-ads', {
       credentials: 'same-origin',

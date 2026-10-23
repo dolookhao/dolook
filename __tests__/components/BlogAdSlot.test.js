@@ -1,4 +1,4 @@
-import { act, render, screen, waitFor } from '@testing-library/react'
+import { render, screen, waitFor } from '@testing-library/react'
 import BlogAdSlot from '@/components/BlogAdSlot'
 
 jest.mock('@/components/GoogleAdsense', () => ({
@@ -13,18 +13,22 @@ const validConfig = {
 }
 
 describe('BlogAdSlot', () => {
-  afterEach(() => jest.restoreAllMocks())
+  afterEach(() => {
+    jest.restoreAllMocks()
+    delete process.env.NEXT_PUBLIC_BLOG_ADS_RUNTIME
+  })
 
-  it('does not render an ad or load third-party code when runtime config is off', async () => {
-    jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => ({ enabled: false }) })
+  it('does not contact a dynamic endpoint when the static ad runtime is off', () => {
+    const fetch = jest.spyOn(global, 'fetch')
     const { container } = render(<BlogAdSlot placement='archive' />)
-    await waitFor(() => expect(global.fetch).toHaveBeenCalledWith('/api/blog-ads', expect.any(Object)))
 
+    expect(fetch).not.toHaveBeenCalled()
     expect(container.querySelector('ins.adsbygoogle')).toBeNull()
     expect(require('@/components/GoogleAdsense').initGoogleAdsense).not.toHaveBeenCalled()
   })
 
   it('renders only the requested blog slot after explicit runtime enablement', async () => {
+    process.env.NEXT_PUBLIC_BLOG_ADS_RUNTIME = 'true'
     jest.spyOn(global, 'fetch').mockResolvedValue({ ok: true, json: async () => validConfig })
     render(<BlogAdSlot placement='article' />)
 

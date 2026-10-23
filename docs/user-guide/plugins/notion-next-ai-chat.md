@@ -32,7 +32,7 @@ NEXT_PUBLIC_AI_CHAT_WELCOME=你好，我是本站 AI 助手。你可以问我文
 
 ## DeepSeek 代理配置
 
-如果你使用 Cloudflare Pages Functions，可以直接使用仓库内置的 `functions/api/ai-chat.ts`。在部署平台的服务端环境变量中添加：
+如果你选择 Cloudflare Pages Functions，可将仓库内的 `optional-pages-functions/api/ai-chat.ts` 复制到顶层 `functions/api/ai-chat.ts`。在部署平台的服务端环境变量中添加：
 
 ```bash
 AI_CHAT_API_KEY=你的 DeepSeek API Key

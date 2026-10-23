@@ -1,5 +1,5 @@
 /** @jest-environment node */
-import { onRequestGet } from '@/functions/api/blog-ads'
+import { onRequestGet } from '@/optional-pages-functions/api/blog-ads'
 
 describe('Cloudflare blog ad config endpoint', () => {
   it('returns a disabled config when the KV binding is unavailable', async () => {

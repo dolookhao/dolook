@@ -12,7 +12,7 @@ NotionNext 已内置一个轻量 AI 助手入口，可以把你的博客接到�
 
 ## 部署代理
 
-在 Cloudflare Pages 项目中添加 Function，例如 `functions/api/docs-chat.ts`。NotionNext 官方文档站已经使用这个文件作为参考实现，它会在服务端读取 Gemini Key，并向前端暴露一个安全的聊天 API。
+在 Cloudflare Pages 项目中添加 Function，例如将仓库的 `optional-pages-functions/api/docs-chat.ts` 复制到顶层 `functions/api/docs-chat.ts`。NotionNext 官方文档站使用这一模式作为参考实现，它会在服务端读取 Gemini Key，并向前端暴露一个安全的聊天 API。纯静态部署不要复制该目录，否则 Pages 会自动部署动态函数。
 
 Cloudflare Pages 环境变量：
 

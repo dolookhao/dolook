@@ -12,8 +12,10 @@ This project is configured for a Next.js static export. The expected Cloudflare 
 
 Do not commit `.env.local`, Notion tokens, OAuth secrets, or other environment values. Configure required values in the Cloudflare Pages dashboard. The source Notion content must be accessible to the build process; the static export does not embed a private API token.
 
-## Current verification status
+## Static-only deployment
 
-The local `yarn export` command is configured, but the latest build did not complete because this environment could not resolve `app.notion.com`. No `out` directory was produced, so this repository is **not yet verified as deployable**. Resolve Notion build access and complete an artifact scan before selecting a production branch in Cloudflare Pages.
+Keep a top-level `functions/` directory out of the deployment branch. Cloudflare Pages automatically detects it and uploads its contents as Pages Functions. Optional AI chat, docs chat, and blog ad handlers are preserved under `optional-pages-functions/` for a future deployment that explicitly enables dynamic functions. The static build leaves `NEXT_PUBLIC_BLOG_ADS_RUNTIME` unset, so blog ad slots make no API request and render no ads.
 
-The optional blog advertising endpoint is a Cloudflare Pages Function at `functions/api/blog-ads.js`. Ads are disabled when its optional `BLOG_ADS_CONFIG` binding is absent or invalid. The Pages Function runtime and binding have not been verified in a deployed Pages project.
+To enable those handlers later, deliberately move the required handler(s) into a top-level `functions/` directory and configure the matching secrets and bindings. That changes the deployment from static-only and requires a new build/deployment.
+
+The first Cloudflare build failed because the private Notion CMS was inaccessible. A structure-only public CMS was created with zero records; the subsequent static export completed, but Cloudflare also detected the repository's top-level `functions/` directory and uploaded a Pages Functions deployment. The directory is now moved out of the recognized location. Trigger and verify a fresh build to confirm the deployment contains only static assets.
