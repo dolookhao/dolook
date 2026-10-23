@@ -1,7 +1,7 @@
 {
-  "name": "NotionNext Blog",
-  "short_name": "NotionNext",
-  "description": "A blog powered by NotionNext",
+  "name": "产品经理个人作品集",
+  "short_name": "产品作品集",
+  "description": "产品经理职业经历、项目作品与专业图文博客",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

@@ -9,26 +9,13 @@ import CONFIG from '../config'
  * @param {*} param0
  * @returns
  */
-export const Blog = ({ posts }) => {
+export const Blog = ({ posts, title, headline, moreHref, moreText }) => {
   const enable = siteConfig('PROXIO_BLOG_ENABLE', true, CONFIG)
+  const autoShowCover = siteConfig('PROXIO_BLOG_AUTO_SHOW_COVER', false, CONFIG)
   if (!enable) {
     return null
   }
-  const autoShowCover = siteConfig('PROXIO_BLOG_AUTO_SHOW_COVER', false, CONFIG)
-
-  // 博客列表默认显示summary文字，当鼠标指向时显示文章封面。这里可选把summary文字替换成图片占位符。
-  const PROXIO_BLOG_PLACEHOLDER_IMG_URL_1 = siteConfig(
-    'PROXIO_BLOG_PLACEHOLDER_IMG_URL_1'
-  )
-  const PROXIO_BLOG_PLACEHOLDER_IMG_URL_2 = siteConfig(
-    'PROXIO_BLOG_PLACEHOLDER_IMG_URL_2'
-  )
-  const PROXIO_BLOG_PLACEHOLDER_IMG_URL_3 = siteConfig(
-    'PROXIO_BLOG_PLACEHOLDER_IMG_URL_3'
-  )
-  const PROXIO_BLOG_PLACEHOLDER_IMG_URL_4 = siteConfig(
-    'PROXIO_BLOG_PLACEHOLDER_IMG_URL_4'
-  )
+  if (!Array.isArray(posts) || posts.length === 0) return null
 
   return (
     <>
@@ -43,77 +30,54 @@ export const Blog = ({ posts }) => {
             <div className='w-full px-4 py-4'>
               <div className='mx-auto max-w-[485px] text-center space-y-4'>
                 <span className='proxio-pill px-3 py-0.5 rounded-2xl mb-2 border'>
-                  {siteConfig('PROXIO_BLOG_TITLE')}
+                  {title || siteConfig('PROXIO_BLOG_TITLE')}
                 </span>
 
                 <h2 className='text-3xl font-bold text-dark dark:text-white sm:text-4xl md:text-[40px] md:leading-[1.2]'>
-                  {siteConfig('PROXIO_BLOG_TEXT_1')}
+                  {headline || siteConfig('PROXIO_BLOG_TEXT_1')}
                 </h2>
               </div>
             </div>
           </div>
           {/* 博客列表 此处优先展示3片文章 */}
           <div className='-mx-4 grid md:grid-cols-2 grid-cols-1'>
-            {posts?.map((item, index) => {
-              const shouldShowCover = autoShowCover && item?.pageCoverThumbnail
-              // 文章封面图片，默认使用占位符 根据index 判断获取的时哪一张图片
-              let coverImg = PROXIO_BLOG_PLACEHOLDER_IMG_URL_1
-              if (index === 0) {
-                coverImg = PROXIO_BLOG_PLACEHOLDER_IMG_URL_1
-              } else if (index === 1) {
-                coverImg = PROXIO_BLOG_PLACEHOLDER_IMG_URL_2
-              } else if (index === 2) {
-                coverImg = PROXIO_BLOG_PLACEHOLDER_IMG_URL_3
-              } else if (index === 3) {
-                coverImg = PROXIO_BLOG_PLACEHOLDER_IMG_URL_4
-              }
+            {posts.map((item, index) => {
+              const showCover =
+                autoShowCover && Boolean(item?.pageCoverThumbnail)
               return (
-                <div key={index} className='w-full px-4'>
+                <div key={item?.href || index} className='w-full px-4'>
                   <div
                     className='wow fadeInUp group mb-10 relative overflow-hidden blog'
                     data-wow-delay='.1s'
                   >
                     <div className='proxio-card relative rounded-xl border overflow-hidden shadow-md'>
-                      <SmartLink href={item?.href} className='block'>
+                      <SmartLink
+                        href={item?.href}
+                        className={`block ${showCover ? 'opacity-0 group-hover:opacity-100' : ''}`}
+                      >
                         {item.pageCoverThumbnail && (
                           // 图片半透明
                           <LazyImage
                             src={item.pageCoverThumbnail}
                             alt={item.title}
-                            className='w-full h-80 object-cover transition-transform duration-500 rounded-xl'
+                            className='h-56 w-full object-cover transition-transform duration-500 group-hover:scale-[1.02]'
                           />
                         )}
-                        {/* 遮罩层，仅覆盖图片部分 */}
-                        <div
-                          className={`absolute inset-0 transition-all duration-500 group-hover:opacity-50 group-hover:bg-black ${
-                            shouldShowCover
-                              ? 'opacity-0'
-                              : 'bg-gray-100 dark:bg-hexo-black-gray'
-                          }`}
-                        />
-                        {/* 鼠标悬停时显示的文字内容 */}
-                        <div
-                          className={`absolute inset-0 flex items-center justify-center group-hover:scale-110 duration-200 group-hover:text-white ${
-                            shouldShowCover
-                              ? 'opacity-0 group-hover:opacity-100'
-                              : ''
-                          }`}
-                        >
-                          {!coverImg && (
-                            <p className='max-w-[370px] text-base text-body-color dark:text-dark-6 flex items-center justify-center duration-200 group-hover:text-white '>
-                              {item.summary}
-                            </p>
-                          )}
-                          <LazyImage
-                            src={coverImg}
-                            className='absolute max-h-full object-cover'
-                          />
-                        </div>
+                        {item.pageCoverThumbnail && item.summary && (
+                          <p className='absolute inset-0 flex items-center justify-center bg-white/90 px-6 py-8 text-base leading-7 text-body-color transition-opacity dark:bg-dark-2/90 dark:text-dark-6'>
+                            {item.summary}
+                          </p>
+                        )}
+                        {!item.pageCoverThumbnail && item.summary && (
+                          <p className='flex min-h-40 items-center px-6 py-8 text-base leading-7 text-body-color dark:text-dark-6'>
+                            {item.summary}
+                          </p>
+                        )}
                       </SmartLink>
                     </div>
                     {/* 内容部分 */}
                     <div className='relative z-10 p-4'>
-                      <span className='inline-blocktext-center text-xs font-medium leading-loose text-white'>
+                      <span className='inline-block text-xs font-medium leading-loose text-body-color dark:text-dark-6'>
                         {item.publishDay}
                       </span>
                       <h3>
@@ -130,6 +94,14 @@ export const Blog = ({ posts }) => {
               )
             })}
           </div>
+          {moreHref && (
+            <div className='flex justify-end pb-8'>
+              <SmartLink className='text-base underline' href={moreHref}>
+                <span>{moreText || '查看更多'}</span>
+                <i className='ml-2 fas fa-arrow-right' />
+              </SmartLink>
+            </div>
+          )}
         </div>
       </section>
       {/* <!-- ====== Blog Section End --> */}

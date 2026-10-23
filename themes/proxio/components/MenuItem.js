@@ -1,5 +1,4 @@
 import SmartLink from '@/components/SmartLink'
-import { useRouter } from 'next/router'
 import { useState } from 'react'
 
 /**
@@ -9,7 +8,6 @@ import { useState } from 'react'
  */
 export const MenuItem = ({ link, isOpen, toggleOpen }) => {
   const hasSubMenu = link?.subMenus?.length > 0
-  const router = useRouter()
 
   // 管理子菜单的展开状态
   const [isSubMenuOpen, setIsSubMenuOpen] = useState(false)
@@ -32,11 +30,7 @@ export const MenuItem = ({ link, isOpen, toggleOpen }) => {
           <SmartLink
             href={link?.href}
             target={link?.target}
-            className={`ud-menu-scroll mx-8 flex py-2 text-sm font-medium text-dark group-hover:text-primary dark:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 ${
-              router.route === '/'
-                ? 'lg:text-white lg:group-hover:text-white'
-                : ''
-            } lg:group-hover:opacity-70`}>
+            className='ud-menu-scroll mx-8 flex py-2 text-sm font-medium text-dark group-hover:text-primary dark:text-white lg:mr-0 lg:inline-flex lg:px-0 lg:py-6 lg:group-hover:opacity-70'>
             {link?.icon && <i className={link.icon + ' mr-2 my-auto'} />}
             {link?.name}
           </SmartLink>
@@ -48,11 +42,7 @@ export const MenuItem = ({ link, isOpen, toggleOpen }) => {
         <li className='submenu-item group relative whitespace-nowrap'>
           <button
             onClick={toggleSubMenu}
-            className={`cursor-pointer relative px-8 flex items-center justify-between py-2 text-sm font-medium text-dark group-hover:text-primary dark:text-white lg:ml-8 lg:mr-0 lg:inline-flex lg:py-6 lg:pl-0 lg:pr-4 ${
-              router.route === '/'
-                ? 'lg:text-white lg:group-hover:text-white'
-                : ''
-            } lg:group-hover:opacity-70 xl:ml-10`}>
+            className='cursor-pointer relative px-8 flex items-center justify-between py-2 text-sm font-medium text-dark group-hover:text-primary dark:text-white lg:ml-8 lg:mr-0 lg:inline-flex lg:py-6 lg:pl-0 lg:pr-4 lg:group-hover:opacity-70 xl:ml-10'>
             <span>
               {link?.icon && <i className={link.icon + ' mr-2 my-auto'} />}
               {link?.name}

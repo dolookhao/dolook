@@ -1,9 +1,14 @@
 const fs = require('node:fs')
 const path = require('node:path')
 const BLOG = require('./blog.config')
+const { assertPersonalNotionSource } = require('./lib/build/personalNotionSource')
 const { extractLangPrefix } = require('./lib/utils/pageId')
 const { isExport } = require('./lib/utils/buildMode')
 const { getStaticPageGenerationTimeoutSec } = require('./lib/build/buildEnv')
+
+if (process.env.BUILD_MODE === 'true' || process.env.EXPORT === 'true') {
+  assertPersonalNotionSource(BLOG.NOTION_PAGE_ID)
+}
 
 // 打包时是否分析代码
 const withBundleAnalyzer = require('@next/bundle-analyzer')({
@@ -225,6 +230,8 @@ const nextConfig = {
       locales: locales
     },
   images: {
+    // Cloudflare Pages serves a static export and does not provide Next's image optimizer endpoint.
+    unoptimized: process.env.EXPORT === 'true',
     // 图片压缩和格式优化
     formats: ['image/avif', 'image/webp'],
     // 图片尺寸优化

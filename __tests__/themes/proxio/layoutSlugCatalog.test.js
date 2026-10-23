@@ -36,7 +36,14 @@ jest.mock('@/themes/proxio/components/ArticleLock', () => ({
 jest.mock('@/themes/proxio/style', () => ({ Style: () => null }))
 jest.mock('@/components/Loading', () => ({ __esModule: true, default: () => null }))
 jest.mock('@/themes/proxio/components/LoadingCover', () => ({ __esModule: true, default: () => null }))
-jest.mock('@/components/NotionPage', () => ({ __esModule: true, default: () => null }))
+jest.mock('@/components/NotionPage', () => ({
+  __esModule: true,
+  default: props => <div data-testid='notion-page' data-embedded-ads={String(props.allowEmbeddedAds)} />
+}))
+jest.mock('@/components/BlogAdSlot', () => ({
+  __esModule: true,
+  default: ({ placement }) => <div data-testid='blog-ad-slot' data-placement={placement} />
+}))
 jest.mock('@/components/Comment', () => ({ __esModule: true, default: () => null }))
 jest.mock('@/components/ShareBar', () => ({ __esModule: true, default: () => null }))
 jest.mock('@/themes/proxio/components/Banner', () => ({
@@ -101,6 +108,34 @@ describe('Proxio LayoutSlug：目录显示统一按 lock 控制', () => {
     expect(container.querySelector('#container-inner').className).not.toContain(
       'xl:w-[calc(100%-16rem)]'
     )
+  })
+
+  it('已发布图文文章默认展示目录和博客返回导航', () => {
+    const { getByTestId, getAllByRole } = renderSlug({
+      post: {
+        type: 'Post',
+        status: 'Published',
+        category: '图文文章',
+        tags: ['AI'],
+        href: '/article/real-article',
+        toc: [{ id: 'h1', text: '标题', indentLevel: 0 }]
+      }
+    })
+
+    expect(getByTestId('catalog')).not.toBeNull()
+    expect(getByTestId('mobile-catalog')).not.toBeNull()
+    expect(getAllByRole('link', { name: '← 返回图文博客' })).toHaveLength(2)
+    expect(getByTestId('notion-page')).toHaveAttribute('data-embedded-ads', 'false')
+    expect(getByTestId('blog-ad-slot')).toHaveAttribute('data-placement', 'article')
+  })
+
+  it('非博客页面禁用正文广告嵌入且不挂载博客广告位', () => {
+    const { getByTestId, queryByTestId } = renderSlug({
+      post: { type: 'Post', status: 'Published', category: '项目案例', toc: [] }
+    })
+
+    expect(getByTestId('notion-page')).toHaveAttribute('data-embedded-ads', 'false')
+    expect(queryByTestId('blog-ad-slot')).toBeNull()
   })
 
   it('目录为空：不渲染目录、正文保持全宽', () => {

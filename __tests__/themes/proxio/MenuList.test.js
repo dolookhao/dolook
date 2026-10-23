@@ -1,87 +1,51 @@
-import { render, screen } from '@testing-library/react'
+import { fireEvent, render, screen } from '@testing-library/react'
 import { MenuList } from '@/themes/proxio/components/MenuList'
-import { useGlobal } from '@/lib/global'
-import { siteConfig } from '@/lib/config'
 
-jest.mock('@/lib/global', () => ({
-  useGlobal: jest.fn()
-}))
-
-jest.mock('@/lib/config', () => ({
-  siteConfig: jest.fn()
-}))
-
-jest.mock('next/router', () => ({
-  useRouter: jest.fn(() => ({
-    route: '/',
-    asPath: '/',
-    pathname: '/'
-  }))
-}))
-
-jest.mock('@/themes/proxio/components/MenuItem', () => ({
-  MenuItem: ({ link }) => <li data-testid='menu-item'>{link?.name}</li>
-}))
-
-const setupSiteConfig = ({ customMenuEnabled }) => {
-  siteConfig.mockImplementation((key, defaultVal) => {
-    if (
-      key === 'HEO_MENU_ARCHIVE' ||
-      key === 'HEO_MENU_SEARCH' ||
-      key === 'HEO_MENU_CATEGORY' ||
-      key === 'HEO_MENU_TAG'
-    ) {
-      return true
-    }
-    if (key === 'CUSTOM_MENU') {
-      return customMenuEnabled
-    }
-    return defaultVal
-  })
-}
-
-describe('proxio MenuList', () => {
-  beforeEach(() => {
-    useGlobal.mockReturnValue({
-      locale: {
-        NAV: { ARCHIVE: 'Archive', SEARCH: 'Search' },
-        COMMON: { CATEGORY: 'Category', TAGS: 'Tags' }
-      }
-    })
-    siteConfig.mockReset()
-  })
-
-  it('falls back to default links when CUSTOM_MENU is enabled but customMenu is empty', () => {
-    setupSiteConfig({ customMenuEnabled: true })
-
-    render(<MenuList customMenu={[]} />)
-
-    expect(screen.getByText('Archive')).toBeInTheDocument()
-    expect(screen.getByText('Search')).toBeInTheDocument()
-    expect(screen.getByText('Category')).toBeInTheDocument()
-    expect(screen.getByText('Tags')).toBeInTheDocument()
-  })
-
-  it('uses custom menu links when CUSTOM_MENU is enabled and customMenu has items', () => {
-    setupSiteConfig({ customMenuEnabled: true })
-
-    render(
-      <MenuList customMenu={[{ name: 'Custom Entry', href: '/custom', show: true }]} />
-    )
-
-    expect(screen.getByText('Custom Entry')).toBeInTheDocument()
-    expect(screen.queryByText('Archive')).not.toBeInTheDocument()
-  })
-
-  it('merges customNav with default links when CUSTOM_MENU is disabled', () => {
-    setupSiteConfig({ customMenuEnabled: false })
-
-    render(
-      <MenuList customNav={[{ name: 'External Nav', href: '/external', show: true }]} />
-    )
-
-    expect(screen.getByText('External Nav')).toBeInTheDocument()
-    expect(screen.getByText('Archive')).toBeInTheDocument()
-  })
+jest.mock('next/router', () => {
+  const router = { route: '/', asPath: '/', pathname: '/' }
+  return { useRouter: jest.fn(() => router) }
 })
 
+jest.mock('@/themes/proxio/components/MenuItem', () => ({
+  MenuItem: ({ link }) => (
+    <li>
+      <a href={link.href}>{link.name}</a>
+    </li>
+  )
+}))
+
+describe('Proxio portfolio navigation', () => {
+  it('provides the six expected portfolio destinations', () => {
+    render(<MenuList />)
+
+    const expected = [
+      ['首页', '/'],
+      ['项目作品', '/#projects'],
+      ['图文博客', '/category/图文文章'],
+      ['经历摘要', '/#career'],
+      ['简历', '/resume'],
+      ['联系我', '/#contact']
+    ]
+    for (const [name, href] of expected) {
+      expect(screen.getByRole('link', { name })).toHaveAttribute('href', href)
+    }
+  })
+
+  it('exposes and updates the mobile menu state accessibly', () => {
+    render(<MenuList />)
+
+    const toggler = screen.getByRole('button', { name: '打开导航菜单' })
+    expect(toggler).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.getByRole('navigation', { name: '主导航' })).toHaveClass(
+      'hidden'
+    )
+
+    fireEvent.click(toggler)
+    expect(
+      screen.getByRole('button', { name: '关闭导航菜单' })
+    ).toHaveAttribute('aria-expanded', 'true')
+    expect(screen.getByRole('navigation', { name: '主导航' })).not.toHaveClass(
+      'hidden'
+    )
+  })
+})

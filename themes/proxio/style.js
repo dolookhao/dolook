@@ -55,6 +55,26 @@ const Style = () => {
         padding-left: 16px;
     }
 
+    #theme-proxio .proxio-blog-article .notion {
+        font-size: 17px;
+        line-height: 1.9;
+        overflow-wrap: anywhere;
+    }
+    #theme-proxio .proxio-blog-article .notion img,
+    #theme-proxio .proxio-blog-article .notion video,
+    #theme-proxio .proxio-blog-article .notion iframe {
+        max-width: 100%;
+    }
+    #theme-proxio .proxio-blog-article .notion-h {
+        scroll-margin-top: 6rem;
+    }
+    @media (max-width: 640px) {
+        #theme-proxio .proxio-blog-article .notion {
+            font-size: 16px;
+            line-height: 1.85;
+        }
+    }
+
   #theme-proxio .sticky{
     position: fixed;
     z-index: 20;

@@ -1,8 +1,10 @@
+import LazyImage from '@/components/LazyImage'
+
 /**
  * 页面顶部宣传栏
  * @returns
  */
-export const Banner = ({ title, description }) => {
+export const Banner = ({ title, description, cover }) => {
   return (
     <>
       {/* <!-- ====== Banner Section Start --> */}
@@ -18,6 +20,11 @@ export const Banner = ({ title, description }) => {
                 <p className='mb-5 text-base text-body-color dark:text-dark-6'>
                   {description}
                 </p>
+                {cover && (
+                  <div className='mx-auto mt-8 max-w-4xl overflow-hidden rounded-2xl border border-slate-200 shadow-sm dark:border-dark-3'>
+                    <LazyImage src={cover} alt={`${title || '文章'}封面`} className='max-h-[28rem] w-full object-cover' />
+                  </div>
+                )}
 
                 {/* <ul className="flex items-center justify-center gap-[10px]">
                 <li>
