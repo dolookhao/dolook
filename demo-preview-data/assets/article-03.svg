@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="用 AI 编程做产品：PRD、验收和变更管理不能省 演示配图">
+<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0B1830"/><stop offset="1" stop-color="#DA8766"/></linearGradient><filter id="s"><feDropShadow dx="0" dy="16" stdDeviation="20" flood-opacity=".19"/></filter></defs>
+<rect width="1200" height="675" rx="24" fill="url(#g)"/>
+<circle cx="1060" cy="-40" r="360" fill="white" opacity=".06"/><circle cx="105" cy="655" r="210" fill="white" opacity=".05"/>
+<g filter="url(#s)"><rect x="648" y="128" width="456" height="348" rx="20" fill="#F6FAFF"/><rect x="675" y="157" width="402" height="42" rx="11" fill="#E3ECFC"/><circle cx="702" cy="177" r="7" fill="#DA8766"/><rect x="728" y="171" width="185" height="12" rx="6" fill="#ADC3E8"/>
+<rect x="675" y="223" width="116" height="215" rx="13" fill="#E3EBF8"/><rect x="817" y="223" width="260" height="95" rx="13" fill="#DA8766" opacity=".78"/><rect x="817" y="333" width="122" height="105" rx="13" fill="#D6E4FC"/><rect x="953" y="333" width="124" height="105" rx="13" fill="#BBD7F9"/></g>
+<text x="68" y="98" font-family="Arial,'PingFang SC',sans-serif" font-size="24" fill="#E2EAFF" letter-spacing="3">PORTFOLIO · ARTICLE</text>
+<text x="68" y="268" font-family="Arial,'PingFang SC',sans-serif" font-size="46" font-weight="700" fill="white">用 AI 编程做产品：PRD、验收和变更管理不能省</text>
+<text x="68" y="325" font-family="Arial,'PingFang SC',sans-serif" font-size="24" fill="#E2EAFF">AI 工作流</text>
+<rect x="68" y="372" width="170" height="2" fill="#D8E5FF" opacity=".6"/>
+<text x="68" y="438" font-family="Arial,'PingFang SC',sans-serif" font-size="20" fill="#DBE5F8">过程 · 系统 · 业务 · 交付</text>
+<rect x="50" y="550" width="340" height="66" rx="16" fill="white" opacity=".13"/>
+<text x="74" y="591" font-family="Arial,'PingFang SC',sans-serif" font-size="27" font-weight="700" fill="#FFF">DEMO / 模拟配图</text>
+</svg>

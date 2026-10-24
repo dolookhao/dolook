@@ -47,6 +47,15 @@ describe('copied NotionNext demo content export guard', () => {
     })).not.toThrow()
   })
 
+  it('rejects explicitly marked demo fixtures from production exports', () => {
+    expect(() => assertNoPublishedDemoContent({
+      allPages: [published('ai-app-matrix', { demoFixture: true })]
+    })).toThrow(/demo fixture/i)
+    expect(() => assertNoPublishedDemoContent({
+      allPages: [published('draft-demo', { status: 'Draft', demoFixture: true })]
+    })).not.toThrow()
+  })
+
   it.each([
     ['Notice', '公告', '#'],
     ['Page', '友链', 'links'],

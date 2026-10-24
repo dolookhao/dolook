@@ -11,14 +11,23 @@ export const MenuList = () => {
   const router = useRouter()
   const menuRef = useRef(null) // 监听点击外部区域
 
-  const portfolioLinks = [
+  const portfolioLinks = process.env.NEXT_PUBLIC_DEMO_PREVIEW === 'true'
+    ? [
+      { name: '首页', href: '/' },
+      { name: '项目作品', href: '/projects' },
+      { name: '职业经历', href: '/experience' },
+      { name: '图文博客', href: '/blog' },
+      { name: '关于我', href: '/about' },
+      { name: '联系我', href: '/contact' }
+    ]
+    : [
     { name: '首页', href: '/' },
     { name: '项目作品', href: '/#projects' },
     { name: '图文博客', href: '/category/图文文章' },
     { name: '经历摘要', href: '/#career' },
     { name: '简历', href: '/resume' },
     { name: '联系我', href: '/#contact' }
-  ]
+    ]
 
   const links = portfolioLinks
 

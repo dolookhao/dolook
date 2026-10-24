@@ -67,6 +67,7 @@ output/
 /public/sitemap.xml
 /public/rss/*
 /sitemap.xml
+/public/demo-preview-assets/
 
 # yarn
 package-lock.json

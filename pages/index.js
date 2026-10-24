@@ -129,14 +129,15 @@ export async function getStaticProps(req) {
     // 生成robotTxt
     generateRobotsTxt(props)
     // 生成Feed订阅
-    if (shouldGenerateRssForLocale({ locale })) {
+    if (!props.demoPreview && shouldGenerateRssForLocale({ locale })) {
       await generateRss(props, unpublishedPageIds)
     }
+    if (props.demoPreview) console.info('[DemoPreview] Skipping Notion-backed RSS generation for fixture content')
     // 生成
     generateSitemapXml(props)
     // 检查数据是否需要从algolia删除
-    await checkDataFromAlgolia(props)
-    if (siteConfig('UUID_REDIRECT', false, props?.NOTION_CONFIG)) {
+    if (!props.demoPreview) await checkDataFromAlgolia(props)
+    if (!props.demoPreview && siteConfig('UUID_REDIRECT', false, props?.NOTION_CONFIG)) {
       // 生成重定向 JSON
       generateRedirectJson(props)
     }

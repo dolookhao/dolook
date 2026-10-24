@@ -26,7 +26,8 @@ const ArticleList = ({
   currentPage = 1,
   pageSize = 12,
   postCount = 0,
-  allowAds = false
+  allowAds = false,
+  demoPreview = false
 }) => {
   const rows = Array.isArray(posts) ? posts : []
   const heading = title || category || (tag ? `标签：${tag}` : '图文博客')
@@ -38,22 +39,42 @@ const ArticleList = ({
     number <= 1 ? baseHref : `${baseHref}/page/${number}`
 
   return (
-    <section className='proxio-section bg-white py-14 dark:bg-dark sm:py-16 lg:py-20'>
+    <section
+      className={`proxio-section bg-white py-14 dark:bg-dark sm:py-16 lg:py-20 ${compact ? 'border-t border-slate-100 dark:border-dark-3' : ''}`}
+    >
       <div className='container mx-auto px-4'>
-        <header className='mx-auto mb-9 max-w-3xl text-center sm:mb-12'>
-          <span className='proxio-pill rounded-full border px-3 py-1'>
-            专业文章与产品实践
-          </span>
-          <Heading className='mt-5 text-3xl font-semibold tracking-tight text-dark dark:text-white sm:text-4xl'>
-            {heading}
-          </Heading>
-          {!compact && (
-            <p className='mt-4 leading-7 text-body-color dark:text-dark-6'>
-              记录产品方法、业务观察与实践复盘。文章内容来自 Notion
-              中已发布的图文文章。
+        <header
+          className={`mb-9 sm:mb-12 ${compact ? 'flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between' : 'mx-auto max-w-3xl text-center'}`}
+        >
+          <div>
+            <p className='text-xs font-semibold tracking-[.17em] text-blue-700 dark:text-cyan-300'>
+              {compact ? 'LATEST WRITING' : '专业文章与产品实践'}
+            </p>
+            <Heading
+              className={`${compact ? 'mt-3' : 'mt-5'} text-3xl font-semibold tracking-tight text-dark dark:text-white sm:text-4xl`}
+            >
+              {heading}
+            </Heading>
+            {!compact && (
+              <p className='mt-4 leading-7 text-body-color dark:text-dark-6'>
+                {rows.some(post => post?.demoFixture)
+                  ? '演示文章用于展示列表、分类、标签、封面和阅读页效果；文章内容为示例资料。'
+                  : '记录产品方法、业务观察与实践复盘。文章内容来自 Notion 中已发布的图文文章。'}
+              </p>
+            )}
+          </div>
+          {compact && demoPreview && (
+            <p className='max-w-sm text-xs leading-5 text-slate-500 dark:text-dark-6'>
+              最近更新 · 内容为演示文章，正式内容将从 Notion 已发布文章读取。
             </p>
           )}
         </header>
+
+        {!compact && rows.some(post => post?.demoFixture) && (
+          <div className='mb-8 rounded-2xl border border-amber-300/70 bg-amber-50 px-4 py-3 text-sm leading-6 text-amber-950 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-100'>
+            演示内容｜本页文章标题、正文与配图用于展示图文阅读体验，均为示例资料。
+          </div>
+        )}
 
         {!compact && (
           <nav
@@ -111,12 +132,12 @@ const ArticleList = ({
         {hasPosts ? (
           <>
             <div
-              className={`grid gap-5 sm:gap-6 ${compact ? 'md:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-3'}`}
+              className={`grid gap-4 sm:gap-5 ${compact ? 'md:grid-cols-3' : 'md:grid-cols-2 xl:grid-cols-3'}`}
             >
               {rows.map((post, index) => (
                 <article
                   key={post.id || post.href || `${post.slug}-${index}`}
-                  className='group overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm transition hover:-translate-y-1 hover:shadow-lg dark:border-dark-3 dark:bg-dark-2'
+                  className='group overflow-hidden rounded-[1.3rem] border border-slate-200 bg-white transition duration-300 hover:-translate-y-1 hover:border-blue-200 hover:shadow-[0_20px_55px_rgba(17,39,74,.1)] dark:border-dark-3 dark:bg-dark-2'
                 >
                   <SmartLink
                     href={post.href}
@@ -127,12 +148,12 @@ const ArticleList = ({
                       <LazyImage
                         src={post.pageCoverThumbnail}
                         alt={post.title || ''}
-                        className='h-48 w-full object-cover sm:h-56'
+                        className='aspect-[1.6] w-full object-cover transition duration-500 group-hover:scale-[1.03]'
                       />
                     ) : (
                       <div
                         aria-hidden='true'
-                        className='flex h-40 items-end bg-gradient-to-br from-slate-100 via-sky-50 to-blue-100 p-5 dark:from-dark-3 dark:via-dark-2 dark:to-slate-800'
+                        className='flex aspect-[1.6] items-end bg-gradient-to-br from-slate-100 via-sky-50 to-blue-100 p-5 dark:from-dark-3 dark:via-dark-2 dark:to-slate-800'
                       >
                         <span className='text-sm font-medium tracking-wide text-slate-500 dark:text-slate-400'>
                           PRODUCT NOTES
@@ -159,7 +180,7 @@ const ArticleList = ({
                           </SmartLink>
                         ))}
                     </div>
-                    <h2 className='mt-3 text-xl font-semibold leading-7 text-dark dark:text-white'>
+                    <h2 className='mt-3 text-lg font-semibold leading-7 text-dark dark:text-white sm:text-xl'>
                       <SmartLink
                         href={post.href}
                         className='hover:text-primary'

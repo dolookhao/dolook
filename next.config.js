@@ -2,12 +2,20 @@ const fs = require('node:fs')
 const path = require('node:path')
 const BLOG = require('./blog.config')
 const { assertPersonalNotionSource } = require('./lib/build/personalNotionSource')
+const { assertDemoPreviewEnvironment } = require('./lib/build/demoPreviewEnv')
 const { extractLangPrefix } = require('./lib/utils/pageId')
 const { isExport } = require('./lib/utils/buildMode')
 const { getStaticPageGenerationTimeoutSec } = require('./lib/build/buildEnv')
 
 if (process.env.BUILD_MODE === 'true' || process.env.EXPORT === 'true') {
-  assertPersonalNotionSource(BLOG.NOTION_PAGE_ID)
+  if (
+    process.env.DEMO_PREVIEW === 'true' ||
+    process.env.NEXT_PUBLIC_DEMO_PREVIEW === 'true'
+  ) {
+    assertDemoPreviewEnvironment()
+  } else {
+    assertPersonalNotionSource(BLOG.NOTION_PAGE_ID)
+  }
 }
 
 // 打包时是否分析代码
@@ -81,6 +89,14 @@ const preBuild = (function () {
   // 删除 public/sitemap.xml 文件 ； 否则会和/pages/sitemap.xml.js 冲突。
   if (process.env.NEXT_PRIVATE_BUILD_WORKER) {
     return
+  }
+  const demoAssetsPath = path.resolve(__dirname, 'public', 'demo-preview-assets')
+  if (process.env.DEMO_PREVIEW === 'true') {
+    assertDemoPreviewEnvironment()
+    fs.cpSync(path.resolve(__dirname, 'demo-preview-data', 'assets'), demoAssetsPath, { recursive: true })
+    console.log('Copied demo SVG assets for the isolated preview build')
+  } else {
+    fs.rmSync(demoAssetsPath, { recursive: true, force: true })
   }
   const sitemapPath = path.resolve(__dirname, 'public', 'sitemap.xml')
   if (fs.existsSync(sitemapPath)) {

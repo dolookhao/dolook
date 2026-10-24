@@ -49,6 +49,8 @@ import {
   getPublishedPosts
 } from './utils/blogPosts'
 import BlogAdSlot from '@/components/BlogAdSlot'
+import DemoMarkdown from './components/DemoMarkdown'
+import DemoExperienceTimeline from './components/DemoExperienceTimeline'
 
 /**
  * 布局框架
@@ -103,28 +105,41 @@ const LayoutIndex = props => {
   const count = siteConfig('PROXIO_BLOG_COUNT', 4, CONFIG)
   const allPublishedPosts = getPublishedPosts(props?.allNavPages)
   const projects = allPublishedPosts
-    .filter(post => post?.category === '项目案例')
+    .filter(post => getNotionCategoryNames(post?.category).includes('项目案例'))
     .slice(0, count)
-  const articles = getPublishedBlogPosts(allPublishedPosts).slice(0, 3)
+  const articles = getPublishedBlogPosts(allPublishedPosts)
+    .sort((left, right) => {
+      const leftDate =
+        Date.parse(left?.publishDate || left?.publishDay || '') || 0
+      const rightDate =
+        Date.parse(right?.publishDate || right?.publishDay || '') || 0
+      return rightDate - leftDate
+    })
+    .slice(0, 3)
   return (
     <>
-      <PortfolioIntro />
+      <PortfolioIntro
+        content={props?.demoContent}
+        featuredProject={projects[0]}
+      />
       <FeaturedProjects posts={projects} />
-      {siteConfig('PROXIO_BLOG_ENABLE', true, CONFIG) && (
-        <ArticleList
-          posts={articles}
-          title='图文博客'
-          moreHref='/category/图文文章'
-          moreText='浏览全部文章'
-          compact
-        />
-      )}
       <Career
         page={(props?.portfolioPages || []).find(
           page => page?.slug === 'experience'
         )}
+        demoContent={props?.demoContent}
       />
-      <ContactSection />
+      {siteConfig('PROXIO_BLOG_ENABLE', true, CONFIG) && (
+        <ArticleList
+          posts={articles}
+          title='图文博客'
+          moreHref={props?.demoPreview ? '/blog' : '/category/图文文章'}
+          moreText='浏览全部文章'
+          compact
+          demoPreview={props?.demoPreview}
+        />
+      )}
+      <ContactSection demoContent={props?.demoContent} />
     </>
   )
 }
@@ -221,6 +236,12 @@ const LayoutResume = () => (
  */
 const LayoutSlug = props => {
   const { post, lock, validPassword } = props
+  const router = useRouter()
+  if (props?.demoPreview && post?.slug === 'experience') {
+    return <DemoExperienceTimeline content={props.demoContent} />
+  }
+  const demoProject = Boolean(post?.demoFixture && isProjectCasePost(post))
+  const demoArticle = Boolean(post?.demoFixture && post?.type === 'Post')
   const isProjectCase = !lock && isProjectCasePost(post)
   const isBlogArticle =
     !lock &&
@@ -229,7 +250,6 @@ const LayoutSlug = props => {
     getNotionCategoryNames(post?.category).includes('图文文章')
 
   // 如果 是 /article/[slug] 的文章路径则視情況进行重定向到另一个域名
-  const router = useRouter()
   if (
     !post &&
     siteConfig('PROXIO_POST_REDIRECT_ENABLE') &&
@@ -284,7 +304,7 @@ const LayoutSlug = props => {
                     className='mx-auto mb-6 flex max-w-4xl flex-wrap items-center justify-between gap-3 border-b border-slate-200 pb-4 text-sm dark:border-dark-3'
                   >
                     <SmartLink
-                      href='/category/图文文章'
+                      href={demoArticle ? '/blog' : '/category/图文文章'}
                       className='font-medium text-primary hover:underline'
                     >
                       ← 返回图文博客
@@ -305,20 +325,28 @@ const LayoutSlug = props => {
                     </div>
                   </nav>
                 )}
-                <NotionPage
-                  {...props}
-                  className={
-                    isBlogArticle
-                      ? 'proxio-blog-article mx-auto max-w-4xl'
-                      : undefined
-                  }
-                  allowEmbeddedAds={false}
-                />
+                {post?.demoContentMarkdown ? (
+                  <DemoMarkdown
+                    markdown={post.demoContentMarkdown}
+                    title={post.title}
+                    cover={isProjectCase ? post.pageCoverThumbnail : undefined}
+                  />
+                ) : (
+                  <NotionPage
+                    {...props}
+                    className={
+                      isBlogArticle
+                        ? 'proxio-blog-article mx-auto max-w-4xl'
+                        : undefined
+                    }
+                    allowEmbeddedAds={false}
+                  />
+                )}
                 {isBlogArticle && <BlogAdSlot placement='article' />}
                 {isProjectCase && (
                   <div className='border-t border-slate-200 py-8 dark:border-dark-3'>
                     <SmartLink
-                      href='/category/项目案例'
+                      href={demoProject ? '/projects' : '/category/项目案例'}
                       className='inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-5 py-2.5 font-semibold text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white'
                     >
                       ← 返回项目作品
@@ -328,7 +356,7 @@ const LayoutSlug = props => {
                 {isBlogArticle && (
                   <div className='mx-auto max-w-4xl border-t border-slate-200 py-8 dark:border-dark-3'>
                     <SmartLink
-                      href='/category/图文文章'
+                      href={demoArticle ? '/blog' : '/category/图文文章'}
                       className='inline-flex min-h-11 items-center rounded-lg border border-slate-300 px-5 py-2.5 font-semibold text-dark transition hover:border-primary hover:text-primary dark:border-dark-3 dark:text-white'
                     >
                       ← 返回图文博客
@@ -504,7 +532,7 @@ const LayoutPostList = props => {
       <ArticleList
         posts={getPublishedBlogPosts(publishedPosts)}
         category={category}
-        baseHref='/category/图文文章'
+        baseHref={props?.demoPreview ? '/blog' : '/category/图文文章'}
         currentPage={props.page || 1}
         pageSize={siteConfig('POSTS_PER_PAGE', 12, props.NOTION_CONFIG)}
         postCount={props.postCount || 0}
